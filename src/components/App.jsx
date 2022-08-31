@@ -1,63 +1,75 @@
-import React, { Component } from 'react';
+import { useReducer } from 'react';
+import calcPositivePercent from 'services/calcPositivePercent';
+import calcTotalFromObject from 'services/calcTotalFromObject';
 import FeedbackOptions from './FeedbackOptions/FeedbackOptions';
 import Notification from './Notification/Notification';
 import Section from './Section/Section';
 import Statistics from './Statictics/Statistics';
 
-export class App extends Component {
-  state = {
-    good: 0,
-    neutral: 0,
-    bad: 0,
-  }
+// Initial values for each feedback
+const INITIAL_VALUES = {
+  good: 0,
+  neutral: 0,
+  bad: 0,
+}
 
-  countTotalFeedback = (state) => {
-    return Object.values(state).reduce((prev, el) => prev + el, 0);
+// Function for useReducer Hook to manage feedback state values
+const feedbackOptionReducer = (feedbackOptions, action) => {
+  switch (action.type) {
+    case "increment":
+      return {
+        ...feedbackOptions, [action.option]: feedbackOptions[action.option] + 1
+      }
+    default:
+      console.log('No case in feedbackOptionReducer has been registered.');
   }
+}
 
-  countPositiveFeedbackPercentage = (good, total) => {
-    const positivePercentage = Math.round((good / total) * 100);
-    return (
-      isNaN(positivePercentage)
-        ? 0
-        : positivePercentage
-    )
-  }
+const App = () => {
+  // Create a useReducer Hook for feedback button state management
+  const [state, dispatch] = useReducer(feedbackOptionReducer, INITIAL_VALUES);
 
-  feedbackIncrement = (evt) => {
-    const key = evt.target.textContent;
-    this.setState((state) => ({[key]: state[key] + 1}));
-  }
+  // State destruction for feedback buttons
+  const {good, neutral, bad} = state;
 
-  render() {
-    const {good, neutral, bad} = this.state;
-    const total = this.countTotalFeedback(this.state);
-    const positive = this.countPositiveFeedbackPercentage(good, total);
-    const btnNames = Object.keys(this.state);
+  // Calculate the sum of all collected feedback
+  const total = calcTotalFromObject(state);
 
-    return (
-      <>
-        <Section title="Please leave feedback">
-          <FeedbackOptions 
-            options={btnNames} 
-            onLeaveFeedback={this.feedbackIncrement}
-          />
-        </Section>
-        <Section title="Statistics">
-          {(total !== 0)
-            ? <Statistics 
-                good={good} 
-                neutral={neutral} 
-                bad={bad} 
-                total={total} 
-                positivePercentage={positive}
-              />
-            : <Notification message="There is no feedback" />
-          }
-        </Section>
-      </>
-    );
-  }
+  // Calculating a positive response percentage
+  const positivePercentage = calcPositivePercent(total, good);
+
+  // Support for feedback buttons
+  const feedbackIncrement = (evt) => {
+    return dispatch({
+      type: "increment",
+      option: evt.target.textContent,
+    });
+  };
+
+  const btnNames = Object.keys(state);
+
+  return (
+    <>
+      <Section title="Please leave feedback">
+        <FeedbackOptions 
+          options={btnNames} 
+          onLeaveFeedback={feedbackIncrement}
+        />
+      </Section>
+      <Section title="Statistics">
+        {(total > 0)
+          ? <Statistics 
+              good={good} 
+              neutral={neutral} 
+              bad={bad} 
+              total={total} 
+              positivePercentage={positivePercentage}
+            />
+          : <Notification message="There is no feedback" />
+        }
+      </Section>
+    </>
+  )
 }
  
 export default App;

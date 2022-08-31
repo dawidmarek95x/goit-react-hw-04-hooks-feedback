@@ -1,4 +1,6 @@
-.btns {
+import styled from "styled-components";
+
+export const Button = styled.button`
   font-size: 16px;
   font-weight: 500;
   padding: 3px 7px;
@@ -12,13 +14,12 @@
   transition: background-color 1200ms;
   margin-right: 10px;
 
-  &__last {
-    @extend .btns;
-    margin-right: 0;
-  }
-
   &:active {
-    background-color: cadetblue;
+    background-color: ${props => props.positive ? "#89BF53" : "#BE3535"};
     transition: background-color 50ms;
   }
-}
+`;
+
+export const LastButton = styled(Button)`
+  margin-right: 0;
+`;
